@@ -17,6 +17,8 @@ from Crypto.Util.Padding import pad, unpad
 
 load_dotenv()
 
+SEARCHED_LOCATIONS_PATH = "data/searched_locations.json"
+
 # fetch datamall api key from env
 API_ENDPOINT = os.getenv("API_ENDPOINT")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
@@ -41,11 +43,21 @@ class Client:
         super().__init__()
 
         self.http_session = aiohttp.ClientSession()
-        self.searched_locations = set()  # To keep track of searched locations
+
+        if os.path.exists(SEARCHED_LOCATIONS_PATH):
+            with open(SEARCHED_LOCATIONS_PATH, 'r') as f:
+                self.searched_locations = set(tuple(x) for x in json.load(f))
+        else:
+            self.searched_locations = set()
 
         self.private_rsa_cipher = PKCS1_v1_5.new(RSA.import_key(PRIVATE_KEY))
         self.public_rsa_cipher = PKCS1_v1_5.new(RSA.import_key(PUBLIC_KEY))
         self.token = token
+
+    def save_searched_locations(self):
+        with open(SEARCHED_LOCATIONS_PATH, 'w') as f:
+            json.dump(list(self.searched_locations), f)
+
 
     def decrypt(self, encrypted_key: str, encrypted_data: str):
         ek_bytes = base64.b64decode(encrypted_key)
@@ -153,11 +165,16 @@ class Client:
             
             for datum in data:
                 if (abs(processed_item['latitude'] - datum['lat']) < 0.0001 and
-                    abs(processed_item['longitude'] - datum['lng']) < 0.0001):
+                    abs(processed_item['longitude'] - datum['lng']) < 0.0001) and 'qr' not in processed_item:
                     processed_item['qr'] = datum['qrCode']
                     insertions += 1
+
+                    self.searched_locations.add((processed_item['latitude'], processed_item['longitude']))
                     data.remove(datum)
                     break
+                elif 'qr' in processed_item:
+                    self.searched_locations.add((processed_item['latitude'], processed_item['longitude']))
+            
             
             processed_data.append(processed_item)
 
@@ -170,7 +187,7 @@ class Client:
 
     async def find_next_location(self):
         with open('data/bicycle_parking_locations.json', 'r') as file:
-            bicycle_parking_locations = json.load(file)["data"]
+            bicycle_parking_locations = json.load(file)["data"][::-1]
 
         target_location = None
 
@@ -178,6 +195,8 @@ class Client:
             if "qr" not in location and (location['latitude'], location['longitude']) not in self.searched_locations:
                 target_location = location
                 break
+            elif "qr" in location:
+                self.searched_locations.add((location['latitude'], location['longitude']))
 
         print("yay we got a target location:", target_location)
         
@@ -191,10 +210,11 @@ class Client:
         )
 
         self.searched_locations.add((target_location['latitude'], target_location['longitude']))
+        self.save_searched_locations()
 
         # sleep for 10s
         print(f"Sleeping for 10 seconds after processing! yay we're repsonsible!")
-        await asyncio.sleep(10)
+        await asyncio.sleep(2.5)
 
         return True
     
