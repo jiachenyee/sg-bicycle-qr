@@ -1,5 +1,7 @@
 # sg-bicycle-qr
 
+a giant dataset of bicycle parking spots and their qr codes. at some point, ill finish writing the actions workflow to auto-update this repo.
+
 ## install requirements
 
 using uv:
