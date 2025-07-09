@@ -5,4 +5,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: uv run pip install -r requirements.txt
+    - name: Set up .env
+      run: |
+        echo "DATAMALL_API_KEY=\"${{ secrets.DATAMALL_API_KEY }}\"" >> .env
+        echo "PRIVATE_KEY=\"${{ secrets.PRIVATE_KEY }}\"" >> .env
+        echo "PUBLIC_KEY=\"${{ secrets.PUBLIC_KEY }}\"" >> .env
+        echo "HEADER_PREFIX=\"${{ secrets.HEADER_PREFIX }}\"" >> .env
+        echo "REQUEST_API_VERSION=\"${{ secrets.REQUEST_API_VERSION }}\"" >> .env
+        echo "REQUEST_BRAND=\"${{ secrets.REQUEST_BRAND }}\"" >> .env
+        echo "REQUEST_OS=\"${{ secrets.REQUEST_OS }}\"" >> .env
+        echo "REQUEST_OS_VERSION=\"${{ secrets.REQUEST_OS_VERSION }}\"" >> .env
+        echo "REQUEST_SCREEN=\"${{ secrets.REQUEST_SCREEN }}\"" >> .env
+        echo "REQUEST_VERSION=\"${{ secrets.REQUEST_VERSION }}\"" >> .env
+        echo "REQUEST_VERSION_CODE=\"${{ secrets.REQUEST_VERSION_CODE }}\"" >> .env
+        echo "REQUEST_USER_AGENT=\"${{ secrets.REQUEST_USER_AGENT }}\"" >> .env
+        echo "LOGIN=\"${{ secrets.LOGIN }}\"" >> .env
+        echo "PASSWORD=\"${{ secrets.PASSWORD }}\"" >> .env
+        echo "API_ENDPOINT=\"${{ secrets.API_ENDPOINT }}\"" >> .env
