@@ -83,6 +83,7 @@ class Client:
 
         deviceId = os.urandom(20).hex().upper()
         nonce = md5((deviceId + current_time_millis).encode()).hexdigest()
+
         td_elements = [
             self.token,
             deviceId
@@ -133,7 +134,6 @@ class Client:
     async def get_parking(self, latitude, longitude):
         payload = {
             "lng": longitude,
-            "tripProgress": "true",
             "radius": "1000",
             "lat": latitude
         }
@@ -149,7 +149,7 @@ class Client:
 
         print("hellooooo ")
         response = await self.get_parking(latitude, longitude)
-        data = response['data']
+        data = response['data']['area']
 
         print("we got the data!")
 
@@ -164,8 +164,8 @@ class Client:
             processed_item = location
             
             for datum in data:
-                if (abs(processed_item['latitude'] - datum['lat']) < 0.0001 and
-                    abs(processed_item['longitude'] - datum['lng']) < 0.0001) and 'qr' not in processed_item:
+                if (abs(processed_item['latitude'] - datum['lat']) < 0.0002 and
+                    abs(processed_item['longitude'] - datum['lng']) < 0.0002) and 'qr' not in processed_item:
                     processed_item['qr'] = datum['qrCode']
                     insertions += 1
 
